@@ -1,162 +1,83 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
+#import data
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt 
+wxy = pd.read_excel(r'travel_inbound.xlsx',sheet_name='T2',skiprows = range(9),nrows=17,index_col = 'Data Series')
+print(type(wxy))
+wxy.head()
+#Convert the data info
+wxy= wxy.transpose()
+wxy.index = wxy.index.str.replace(' Jan', '-01')\
+                   .str.replace(' Feb', '-02')\
+                   .str.replace(' Mar', '-03')\
+                   .str.replace(' Apr', '-04')\
+                   .str.replace(' May', '-05')\
+                   .str.replace(' Jun', '-06')\
+                   .str.replace(' Jul', '-07')\
+                   .str.replace(' Aug', '-08')\
+                   .str.replace(' Sep', '-09')\
+                   .str.replace(' Oct', '-10')\
+                   .str.replace(' Nov', '-11')\
+                   .str.replace(' Dec', '-12')
 
-# C extensions
-*.so
-
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-cover/
-
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-.pybuilder/
-target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-#   For a library or package, you might want to ignore these files since the code is
-#   intended to run in multiple environments; otherwise, check them in:
-# .python-version
-
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-#Pipfile.lock
-
-# poetry
-#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
-#poetry.lock
-
-# pdm
-#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
-#pdm.lock
-#   pdm stores project-wide configurations in .pdm.toml, but it is recommended to not include it
-#   in version control.
-#   https://pdm.fming.dev/latest/usage/project/#working-with-version-control
-.pdm.toml
-.pdm-python
-.pdm-build/
-
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
-__pypackages__/
-
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath parsed files
-*.sage.py
-
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
-
-# pytype static type analyzer
-.pytype/
-
-# Cython debug symbols
-cython_debug/
-
-# PyCharm
-#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
-#  and can be added to the global gitignore or merged into this file.  For a more nuclear
-#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
-#.idea/
+print(wxy.columns)
+print(wxy.head())
+#classify data
+wxy[['y','m']]= wxy.index.to_series().str.split('-',expand=True)
+wxy['0-1 day']=wxy['  Under 1 Day (Number)'].astype(int)+wxy['  1 Day (Number)'].astype(int)
+wxy['15 days & over']=wxy['  15 Days & Over (Number)'].astype(int)
+wxy['2-7 days']=wxy['  2 Days (Number)'].astype(int)+wxy['  3 Days (Number)'].astype(int)+wxy['  4 Days (Number)'].astype(int)+wxy['  5 Days (Number)'].astype(int)+wxy['  6 Days (Number)'].astype(int)+wxy['  7 Days (Number)'].astype(int)
+wxy['8-14 days']=wxy['Total International Visitor Arrivals (Number)'].astype(int)-wxy['0-1 day']-wxy['15 days & over']-wxy['2-7 days']
+wxy['total_day']=wxy['Total International Visitor Arrivals (Number)']*wxy['Average Length Of Stay (Day)']
+print(wxy.columns)
+wxy.head()
+#calculate the average number of people grouped by month
+wxy1=wxy.groupby(['m'])[['Total International Visitor Arrivals (Number)', '0-1 day', '15 days & over', '2-7 days', '8-14 days']].agg(np.mean)
+print(wxy1.columns)
+wxy1.head()
+#calculate the percentage
+wxy2=wxy.groupby(['m'])[['Total International Visitor Arrivals (Number)', '0-1 day', '15 days & over', 'total_day', '2-7 days', '8-14 days']].agg(np.sum)
+wxy2['average length']=wxy2['total_day']/wxy2['Total International Visitor Arrivals (Number)']
+wxy2['total_p']=wxy2['Total International Visitor Arrivals (Number)']/wxy2['Total International Visitor Arrivals (Number)'].sum()
+wxy2['1_p']=100*wxy2['0-1 day']/wxy2['0-1 day'].sum()
+wxy2['27_p']=100*wxy2['2-7 days']/wxy2['2-7 days'].sum()
+wxy2['814_p']=100*wxy2['8-14 days']/wxy2['8-14 days'].sum()
+wxy2['15_p']=100*wxy2['15 days & over']/wxy2['15 days & over'].sum()
+wxy2.head()
+#organize data for plotting purpose
+wxy3=wxy2[['1_p','27_p','814_p','15_p']]
+wxy3['0-1 Day']=wxy3['1_p']
+wxy3['2-7 Days']=wxy3['27_p']
+wxy3['8-14 Days']=wxy3['814_p']
+wxy3['15 Days and More']=wxy3['15_p']
+wxy3=wxy3[['0-1 Day','2-7 Days','8-14 Days','15 Days and More']]
+wxy3=wxy3.transpose()
+wxy3
+#variation trend of international visitors arrivals with different length of stay
+wxy.plot.line(y=[('0-1 day'),('2-7 days'),('8-14 days'),('15 days & over')], color= ['#80dfff', '#1ac6ff', '#0086b3', '#00131a'],figsize=(15,10)).invert_xaxis()
+plt.title('International Visitor Arrivals with Different Length of Stay')
+plt.xlabel('Time')
+plt.ylabel('International Visitor Arrivals (Number)')
+plt.show()
+#International Visitors Arrivals staying for 0-1 Day and 2-7 Days (Group by Month)
+wxy1.plot(y=['0-1 day','2-7 days'],kind='line',color= ['#80dfff', '#1ac6ff'],figsize=(10, 7))
+plt.xlabel('Month')
+plt.ylabel('International Visitors Arrivals (Number)')
+plt.title('International Visitors Arrivals staying for 0-1 Day and 2-7 Days (Group by Month)')
+plt.legend(title='Length of Stay')
+plt.show()
+#International Visitors Arrivals Staying for 8-14 Dayd and 15 Days and Over (Group by Month)
+wxy1.plot(y=['8-14 days','15 days & over'],kind='line',color= ['#0086b3', '#00131a'],figsize=(10, 7))
+plt.xlabel('Month')
+plt.ylabel('International Visitors Arrivals(Number)')
+plt.title('International Visitors Arrivals Staying for 8-14 Dayd and 15 Days and Over (Group by Month)')
+plt.legend(title='Length of Stay')
+plt.show()
+#The Proportion of Passengers with Different Length of Stay by Month (%)
+import seaborn as sns
+plt.figure(figsize=(30, 7))
+sns.heatmap(wxy3, annot=True, cmap='Blues',fmt='g',cbar=True)
+plt.xlabel('Month',fontsize=20)
+plt.ylabel('Length of Stay',fontsize=20)
+plt.title('The Proportion of Passengers with Different Length of Stay by Month (%)',fontsize=25)
+plt.show()
